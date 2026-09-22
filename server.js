@@ -292,7 +292,7 @@ async function testSelectedModelConfig(config) {
             [{ dataUrl: PROVIDER_TEST_IMAGE_DATA_URL, name: "connection-test.png" }]
           )
         }],
-        max_tokens: 32,
+        max_tokens: 1024,
         stream: false
       }, requestContext);
       if (!extractChatCompletionText(data).trim()) {
@@ -1475,9 +1475,16 @@ function toProviderImageSize(width, height, config) {
     isOfficialOpenAI = false;
   }
   if (!isOfficialOpenAI) {
-    const targetWidth = Math.round(clampNumber(width, 256, 4096));
-    const targetHeight = Math.round(clampNumber(height, 256, 4096));
-    return `${targetWidth}x${targetHeight}`;
+    let targetWidth = clampNumber(width, 256, 4096);
+    let targetHeight = clampNumber(height, 256, 4096);
+    // Volcano Ark rejects images below 921600 px area (960x960); upscale proportionally.
+    const minArea = 921600;
+    if (targetWidth * targetHeight < minArea) {
+      const scale = Math.sqrt(minArea / (targetWidth * targetHeight));
+      targetWidth *= scale;
+      targetHeight *= scale;
+    }
+    return `${Math.round(targetWidth)}x${Math.round(targetHeight)}`;
   }
   return toOpenAIImageSize(width, height);
 }
