@@ -83,7 +83,7 @@ function joinProviderRequestUrl(baseUrl, requestPath) {
   const normalizedPath = String(requestPath || "").startsWith("/")
     ? String(requestPath)
     : `/${requestPath}`;
-  if (/\/v1$/i.test(normalizedBaseUrl) && /^\/v1(?:\/|$)/i.test(normalizedPath)) {
+  if (/\/v\d+$/i.test(normalizedBaseUrl) && /^\/v1(?:\/|$)/i.test(normalizedPath)) {
     return `${normalizedBaseUrl}${normalizedPath.slice(3)}`;
   }
   return `${normalizedBaseUrl}${normalizedPath}`;
@@ -123,7 +123,7 @@ async function listProviderModels({ baseUrl, apiKey, signal, fetchImpl = fetch }
 function buildProviderModelsUrl(baseUrl) {
   const normalized = String(baseUrl || "").trim().replace(/\/+$/, "");
   if (!/^https?:\/\//i.test(normalized)) throw badRequest("Base URL 必须以 http:// 或 https:// 开头");
-  return `${normalized}${/\/v1$/i.test(normalized) ? "" : "/v1"}/models`;
+  return `${normalized}${/\/v\d+$/i.test(normalized) ? "" : "/v1"}/models`;
 }
 
 async function parseOpenAIResponse(response) {

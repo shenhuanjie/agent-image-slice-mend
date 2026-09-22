@@ -105,6 +105,27 @@ test("static config does not duplicate a trailing v1 path", async () => {
   assert.equal(requests[0], "https://gateway.example.com/v1/chat/completions");
 });
 
+test("static config strips the v1 prefix for non-v1 versioned base urls", async () => {
+  const requests = [];
+  const client = createProviderHttpClient({
+    fetchImpl: async (url) => {
+      requests.push(url);
+      return { ok: true, text: async () => "{\"choices\":[]}" };
+    },
+    createAbortError,
+    getRequestSignal: () => null,
+    config: {
+      baseUrl: "https://ark.cn-beijing.volces.com/api/v3",
+      apiKey: "sk-test",
+      timeoutMs: 30000
+    }
+  });
+
+  await client.callOpenAIJson("/v1/chat/completions", {});
+
+  assert.equal(requests[0], "https://ark.cn-beijing.volces.com/api/v3/chat/completions");
+});
+
 test("parseOpenAIStreamResponse joins OpenAI-compatible SSE text deltas", async () => {
   const data = await parseOpenAIStreamResponse({
     ok: true,
@@ -209,6 +230,7 @@ test("provider request converts upstream cancellation to AbortError", async () =
 test("buildProviderModelsUrl appends v1 models path only when needed", () => {
   assert.equal(buildProviderModelsUrl("https://api.openai.com"), "https://api.openai.com/v1/models");
   assert.equal(buildProviderModelsUrl("https://api.openai.com/v1"), "https://api.openai.com/v1/models");
+  assert.equal(buildProviderModelsUrl("https://ark.cn-beijing.volces.com/api/v3"), "https://ark.cn-beijing.volces.com/api/v3/models");
 });
 
 test("listProviderModels rejects a missing API key", async () => {
